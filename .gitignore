@@ -1,0 +1,9 @@
+node_modules/
+
+#Ignore VS code launch.json
+launch.json
+log/*
+heapdump-*
+*.0x/*
+isolate-*
+coverage

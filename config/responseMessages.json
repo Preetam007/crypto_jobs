@@ -1,0 +1,41 @@
+{
+    "LOGIN" : {
+        "WRONG_EMAIL_PW": "Email and password does not match.",
+        "ACC_BLOCKED":"Your Account is blocked.",
+        "ACC_UNVERIFIED" : "Email unverified , please check your e-mail and verify.",
+        "EMPTY_2FA" : "Please enter the 2FA code."
+    },
+    "FORGOT_PWD" : {
+        "INEXISTENT_EMAIL": "Your account does not exist. Please sign-up to create your account.",
+        "SUCCESS":"Password reset link has been sent to your email."
+    },
+    "RESET_PW_WITH_TOKEN" : {
+        "INVALID_TOKEN" : "This link has been expired. Please try again.",
+        "MIN_PW_LENGTH" : "Password should be at least 6 characters long.",
+        "REPEATED_PW":"New password cannot be same as the old password.",
+        "SUCCESS":"Your password has been changed successfully."
+    },
+    "RESET_PW_WITH_OLD_PW" : {
+        "REPEATED_PW":"New password cannot be same as the old password.",
+        "SUCCESS":"Your password has been changed successfully."  
+    },
+    "SIGNUP_LOCAL":{
+        "EXISTING_EMAIL":"Email already exists.",
+        "MIN_PW_LENGTH" : "Password should be at least 6 characters long.",
+        "SELECT_TC":"Please select the checkbox before clicking on register button.",
+        "SUCCESS_VERIFY_EMAIL":"Your account has been verified.",
+        "SUCCESS_SIGNUP":"Please check your email for verification link."
+    },
+    "2FA":{
+        "INVALID_VER_CODE":"Incorrect authentication code. Please try again.",
+        "SUCCESS_ENABLE":"2FA authentication has been enabled now.",
+        "SUCCESS_DISABLE": "2FA authentication has been disabled."
+    },
+    "VOTING" :{
+        "MIN_ALERT":"Please select at least three coins.",
+        "SUCCESS": "Thanks for the voting. You can refer friends now."
+    },
+    "UNKNOWN_ERR" : "Something went wrong."
+
+
+}
