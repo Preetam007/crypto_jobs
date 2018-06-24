@@ -40,6 +40,46 @@ var receipt = web3.eth.getTransactionReceipt('0x77283690ccce4fd2aebf5387a8f68425
   //   "status": "1"
   // }
   // so check value should be equal to user amount in our db
+
+  // {
+  //   blockHash: '0xa4212dece44dab28e4d4d9492820073046c0febffe2118fea65f066045d79df5',
+  //   blockNumber: 3495297,
+  //   contractAddress: null,
+  //   cumulativeGasUsed: 815218,
+  //   from: '0xa9ee36ba5bbe5c3e7c8770e1427421fa00badd82',
+  //   gasUsed: 107882,
+  //   logs: [{
+  //       address: '0x54F5C2a2F8D191345cF5445807dd76EB6A421950',
+  //       topics: [Array],
+  //       data: '0x000000000000000000000000000000000000000000000355eae9de53c1200000',
+  //       blockNumber: 3495297,
+  //       transactionHash: '0x77283690ccce4fd2aebf5387a8f684252929f965c86a6c34bb75991cffdb82c0',
+  //       transactionIndex: 8,
+  //       blockHash: '0xa4212dece44dab28e4d4d9492820073046c0febffe2118fea65f066045d79df5',
+  //       logIndex: 4,
+  //       removed: false,
+  //       id: 'log_7be32f45'
+  //     },
+  //     {
+  //       address: '0xBCe0532E131e74efCB750b867Af31EfD161Bd22f',
+  //       topics: [Array],
+  //       data: '0x0000000000000000000000000000000000000000000000000de0b6b3a7640000000000000000000000000000000000000000000000000355eae9de53c1200000',
+  //       blockNumber: 3495297,
+  //       transactionHash: '0x77283690ccce4fd2aebf5387a8f684252929f965c86a6c34bb75991cffdb82c0',
+  //       transactionIndex: 8,
+  //       blockHash: '0xa4212dece44dab28e4d4d9492820073046c0febffe2118fea65f066045d79df5',
+  //       logIndex: 5,
+  //       removed: false,
+  //       id: 'log_dbcd9892'
+  //     }
+  //   ],
+  //   logsBloom: '0x00000000000000000000000000000000200000004000000040000000000000001000000000000000000000000000000000000000000000000000000000200000000000000000000000000008000000000000000000000000080000000000000000800000400000000000000000000000000000000000000000000010000000040000000000000000000000000000000000000000000000000010000020000000000000002000000000000000000000000000000000000000800000000000000000000002000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000000000',
+  //   status: '0x1',
+  //   to: '0xbce0532e131e74efcb750b867af31efd161bd22f',
+  //   transactionHash: '0x77283690ccce4fd2aebf5387a8f684252929f965c86a6c34bb75991cffdb82c0',
+  //   transactionIndex: 8
+  // }
+
   // after that check in logs array of getTransactionReceipt and in object if address == 'token address'
   // thn in topics array check topics[0] == '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
   // thn decode that log
