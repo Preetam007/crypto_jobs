@@ -84,6 +84,8 @@ var receipt = web3.eth.getTransactionReceipt('0x77283690ccce4fd2aebf5387a8f68425
   // thn in topics array check topics[0] == '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
   // thn decode that log
 
+  
+
   console.log(web3.eth.abi.decodeLog([{
       type: 'address',
       name: 'from',
@@ -109,10 +111,11 @@ var receipt = web3.eth.getTransactionReceipt('0x77283690ccce4fd2aebf5387a8f68425
 
     // check in db for that transaction and compare with user tokens , if equal update token transfer status to true
     
+    // //yes and update in user model
 
   
 });
-
+// end
 console.log(web3.eth.abi.encodeEventSignature('Transfer(address, address, uint256)'));
 // 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef
 
