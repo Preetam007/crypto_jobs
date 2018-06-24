@@ -7,78 +7,78 @@ const web3 = new Web3(new Web3.providers.HttpProvider(`https://ropsten.infura.io
 const obj = JSON.parse(fs.readFileSync('../build/contracts/token.json', 'utf8'));
 const abiArray = obj;
 const contractAddress = process.env.CONTRACT_ADDRESS;
+const tokenAddress =    process.env.TOKEN_ADDRESS;
 const crowdsaleContract = new web3.eth.Contract(abiArray, contractAddress);
-
-
-
-// crowdsaleContract.Transfer(function (err, result) {
-//   if (err) {
-//     return error(err);
-//   }
-
-//   log("Count was incremented by address: ");
-//   getCount();
-// });
-
-// getCount();
-
-
-// var depositEvent = crowdsaleContract.Transfer({
-//   fromBlock: 0,
-//   toBlock: 'latest'
-// });
-
-// depositEvent.watch(function (err, result) {
-//   if (err) {
-//     console.log(err)
-   
-//   }
-//   else {
-//     console.log(result);
-//   }
-//   // append details of result.args to UI
-// })
+const tokenContract = new web3.eth.Contract(abiArray, tokenAddress);
 
 // https://api-ropsten.etherscan.io/api?module=transaction&action=gettxreceiptstatus&txhash=0x77283690ccce4fd2aebf5387a8f684252929f965c86a6c34bb75991cffdb82c0&apikey=QZT28CGN1B29ENZTMDUKENIYBCJ9PWIZ87
 
-// var receipt = web3.eth.getTransactionReceipt('0x77283690ccce4fd2aebf5387a8f684252929f965c86a6c34bb75991cffdb82c0', function name(err, data) {
+var receipt = web3.eth.getTransactionReceipt('0x77283690ccce4fd2aebf5387a8f684252929f965c86a6c34bb75991cffdb82c0', function name(err, data) {
 
-//   console.log(err, data.logs);
+  console.log(err, data);
+
+  // if data.status: '0x1' --> means transaction is correct .
+  // check internal transaction (to check ether sent )
+  // https: //api-ropsten.etherscan.io/api?module=account&action=txlistinternal&txhash=0x77283690ccce4fd2aebf5387a8f684252929f965c86a6c34bb75991cffdb82c0&apikey=QZT28CGN1B29ENZTMDUKENIYBCJ9PWIZ87
+  // output would be like 
+  // // {
+  //   "message": "OK",
+  //   "result": [{
+  //     "blockNumber": "3495297",
+  //     "contractAddress": "",
+  //     "errCode": "",
+  //     "from": "0xbce0532e131e74efcb750b867af31efd161bd22f",
+  //     "gas": "2300",
+  //     "gasUsed": "0",
+  //     "input": "",
+  //     "isError": "0",
+  //     "timeStamp": "1529767060",
+  //     "to": "0xa9ee36ba5bbe5c3e7c8770e1427421fa00badd82",
+  //     "type": "call",
+  //     "value": "1000000000000000000"   // this is amount of ether (divide it by 10 power 18) = 1;
+  //   }],
+  //   "status": "1"
+  // }
+  // so check value should be equal to user amount in our db
+  // after that check in logs array of getTransactionReceipt and in object if address == 'token address'
+  // thn in topics array check topics[0] == '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+  // thn decode that log
+
+  console.log(web3.eth.abi.decodeLog([{
+      type: 'address',
+      name: 'from',
+      indexed: true
+    }, {
+      type: 'address',
+      name: 'to',
+      indexed: true
+    }, {
+      type: 'uint256',
+      name: 'value',
+      indexed: true
+    }],
+    // this big hash is logsBloom key
+    '0x00000000000000000000000000000000200000004000000040000000000000001000000000000000000000000000000000000000000000000000000000200000000000000000000000000008000000000000000000000000080000000000000000800000400000000000000000000000000000000000000000000010000000040000000000000000000000000000000000000000000000000010000020000000000000002000000000000000000000000000000000000000800000000000000000000002000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000000000', [
+      '0x000000000000000000000000bce0532e131e74efcb750b867af31efd161bd22f', // this is topics[1]
+      '0x000000000000000000000000a9ee36ba5bbe5c3e7c8770e1427421fa00badd82', // this is topics[2]
+      '000000000000000000000000000000000000000000000355eae9de53c1200000',   // this is logs.data
+    ]));
+
+    // now check in console for value , divide by 18 
+    // this is no of tokens transferred in that transaction 
+
+    // check in db for that transaction and compare with user tokens , if equal update token transfer status to true
+    
+
   
-// });
+});
 
 console.log(web3.eth.abi.encodeEventSignature('Transfer(address, address, uint256)'));
-
-
-console.log(web3.eth.abi.decodeParameter('address', '0x000000000000000000000000bce0532e131e74efcb750b867af31efd161bd22f'));
-
-console.log(web3.eth.abi.decodeParameter('address', '0x000000000000000000000000a9ee36ba5bbe5c3e7c8770e1427421fa00badd82'));
-
-
-
+// 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef
 
 
 //https: //api-ropsten.etherscan.io/api?module=account&action=txlistinternal&txhash=0x77283690ccce4fd2aebf5387a8f684252929f965c86a6c34bb75991cffdb82c0&apikey=QZT28CGN1B29ENZTMDUKENIYBCJ9PWIZ87
 
-
-// {
-//   "message": "OK",
-//   "result": [{
-//     "blockNumber": "3495297",
-//     "contractAddress": "",
-//     "errCode": "",
-//     "from": "0xbce0532e131e74efcb750b867af31efd161bd22f",
-//     "gas": "2300",
-//     "gasUsed": "0",
-//     "input": "",
-//     "isError": "0",
-//     "timeStamp": "1529767060",
-//     "to": "0xa9ee36ba5bbe5c3e7c8770e1427421fa00badd82",
-//     "type": "call",
-//     "value": "1000000000000000000"
-//   }],
-//   "status": "1"
-// }
 
 
 // https://api-ropsten.etherscan.io/api?module=account&action=tokentx&contractaddress=0x54F5C2a2F8D191345cF5445807dd76EB6A421950&address=0xbce0532e131e74efcb750b867af31efd161bd22f&page=1&offset=100&sort=asc&apikey=QZT28CGN1B29ENZTMDUKENIYBCJ9PWIZ87
