@@ -13,6 +13,12 @@ const web3 = new Web3(new Web3.providers.HttpProvider(`https://ropsten.infura.io
 const internalTrxnUrl = 'https://api-ropsten.etherscan.io/api?module=account&action=txlistinternal&txhash=%trxnHash%&apikey=QZT28CGN1B29ENZTMDUKENIYBCJ9PWIZ87'
 const THE_ADDRESS = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 
+//const obj = JSON.parse(fs.readFileSync('../build/contracts/token.json', 'utf8'));
+//const abiArray = obj;
+const contractAddress = process.env.CONTRACT_ADDRESS;
+const tokenAddress =    process.env.TOKEN_ADDRESS;
+//const crowdsaleContract = new web3.eth.Contract(abiArray, contractAddress);
+//const tokenContract = new web3.eth.Contract(abiArray, tokenAddress);
 
 const service = schedule.scheduleJob('*/1 * * * *', function () {
   console.log('The answer to life, the universe, and everything!');
@@ -39,10 +45,8 @@ trxnStream.on('data', function (pendingTrxn) {
           }
           trxnDoa.findByIdAndUpdate({id:pendingTrxn._id,data});
 
-          decodeLog(Int_valid_result,(err,result)=>{
-
-          })
-
+          var decodedData = decodeLog(Int_valid_result)
+          logger.info(decodedData);
         }
       });
     }
@@ -59,7 +63,7 @@ trxnStream.on('error', function (err) {
 });
 
 trxnStream.on('close', function () {
-  // all done
+  logger.info('all done. Stream Closed.')
 });
 
 
@@ -110,19 +114,12 @@ var decodeLog = function (data) {
       topics1 = element.topics[1];
       topics2 = element.topics[2];
       logsData = element.data;
-    
+      break;
     }
-    
   }
 
-  data.logs.forEach(element => {
-    if (eleme) {
-      
-    }
-  });
-
   //const logsBloom,topics1,topics2,logsData;
-  web3.eth.abi.decodeLog([{
+  return web3.eth.abi.decodeLog([{
     type: 'address',
     name: 'from',
     indexed: true
@@ -136,10 +133,10 @@ var decodeLog = function (data) {
     indexed: true
   }],
   // this big hash is logsBloom key
-  '0x00000000000000000000000000000000200000004000000040000000000000001000000000000000000000000000000000000000000000000000000000200000000000000000000000000008000000000000000000000000080000000000000000800000400000000000000000000000000000000000000000000010000000040000000000000000000000000000000000000000000000000010000020000000000000002000000000000000000000000000000000000000800000000000000000000002000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000000000', [
-    '0x000000000000000000000000bce0532e131e74efcb750b867af31efd161bd22f', // this is topics[1]
-    '0x000000000000000000000000a9ee36ba5bbe5c3e7c8770e1427421fa00badd82', // this is topics[2]
-    '000000000000000000000000000000000000000000000355eae9de53c1200000',   // this is logs.data
+  logsBloom, [
+    topics1, // this is topics[1]
+    topics2, // this is topics[2]
+    logsData,   // this is logs.data
   ])
 }
 
