@@ -5,6 +5,9 @@ const
 // Adding the root project directory to the app module search path:
 require('app-module-path').addPath(__dirname);
 
+// jobs
+require('./jobs/eth_watch.1')
+
 mongoose.connect(config.db, {
   auto_reconnect: true,
   socketOptions: {

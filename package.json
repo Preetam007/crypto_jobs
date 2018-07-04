@@ -10,6 +10,7 @@
   "author": "raopreeetam007@gmail.com",
   "license": "ISC",
   "dependencies": {
+    "agenda": "^1.0.3",
     "app-module-path": "^2.2.0",
     "async": "^2.6.0",
     "bcrypt-nodejs": "0.0.3",
