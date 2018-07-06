@@ -1,12 +1,11 @@
-const 
+const express = require('express'),
   config = require('./config/'),
-  mongoose = require('mongoose');
+  mongoose = require('mongoose'),
+  Agenda = require('agenda'),
+  Agendash = require('agendash'); // eslint-disable-line
 
 // Adding the root project directory to the app module search path:
 require('app-module-path').addPath(__dirname);
-
-// jobs
-require('./jobs/eth_watch.1')
 
 mongoose.connect(config.db, {
   auto_reconnect: true,
@@ -22,10 +21,6 @@ mongoose.connect(config.db, {
     console.log(err);
   } else {
     console.log('✅ ' + 'Mongodb Connected');
-    // cron job inside root because of project's structure with relative paths
-    // const service = require('./jobs/eth');
-    // service.start();
-
   }
 
 });
@@ -37,5 +32,22 @@ db.on('error', function () {
 });
 db.once('open', function callback() {
   console.log('✅ ' + 'Connected to Database : ' + config.db.substring(config.db.lastIndexOf('/') + 1, config.db.length));
-  require('./jobs/eth_watch.1');
 });
+
+const app = express();
+
+
+const agenda = new Agenda({
+  db: {
+    address: 'mongodb://localhost/idap',
+    collection: 'agendaJobs'
+  }
+});
+
+require('./jobs/eth_watch.1')(agenda);
+
+app.listen(4030, () => {
+  console.log(`Express server listening on port ${config.port}\nOn env`);
+});
+
+app.use('/jobs/agendash', Agendash(agenda));

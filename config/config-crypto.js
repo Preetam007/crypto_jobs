@@ -9,6 +9,9 @@ var config = {
     btc_url: "https://test-insight.bitpay.com/",
     eth_api_url: "http://api-ropsten.etherscan.io/",
     btc_api_url: "https://test-insight.bitpay.com/api/",
+    btc_blockcypher_api_url: "https://api.blockcypher.com/v1/btc/test3/",
+    //@NOTE: need ?token=$YOUR_TOKEN' for blockcypher faucet
+    btc_blockcypher_test_faucet_api_url: "https://api.blockcypher.com/v1/bcy/test",
     contract: "",
     relay_contract: "",
     pricingstrategy:"",
@@ -23,6 +26,7 @@ var config = {
     btc_url: "https://insight.bitpay.com/",
     eth_api_url: "https://api.etherscan.io/api",
     btc_api_url: "https://insight.bitpay.com/api/",
+    btc_blockcypher_api_url: "https://api.blockcypher.com/v1/btc/main/",
     contract: "",
     relay_contract: "",
     pricingstrategy:"",
