@@ -44,10 +44,28 @@ const agenda = new Agenda({
   }
 });
 
-require('./jobs/eth_watch.1')(agenda);
+require('./jobs/eth')(agenda);
 
 app.listen(4030, () => {
   console.log(`Express server listening on port ${config.port}\nOn env`);
 });
 
 app.use('/jobs/agendash', Agendash(agenda));
+
+process.on('unhandledRejection', (reason, p) => {
+  console.log('UNHANDLED REJECTION', reason, p);
+});
+
+process.on('uncaughtException', (error) => {
+  console.log('UNCAUGHT EXCEPTION', error);
+  
+  process.exit(1);
+});
+
+// If the Node process ends, close the Mongoose connection
+process.on('SIGINT', () => {
+  db.close(() => {
+    console.log('Mongoose default connection disconnected through app termination');
+    process.exit(0);
+  });
+});
