@@ -46,11 +46,13 @@ const agenda = new Agenda({
 
 require('./jobs/eth')(agenda);
 
-app.listen(4030, () => {
+app.use('/jobs/agendash', Agendash(agenda));
+
+app.listen(4035, () => {
   console.log(`Express server listening on port ${config.port}\nOn env`);
 });
 
-app.use('/jobs/agendash', Agendash(agenda));
+
 
 process.on('unhandledRejection', (reason, p) => {
   console.log('UNHANDLED REJECTION', reason, p);

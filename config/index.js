@@ -12,7 +12,7 @@ const config = {
       webApi: 'v1',
       mobileApi: 'v1'
     },
-    port: process.env.PORT || 4030,
+    port: process.env.PORT || 4035,
     db: 'mongodb://localhost/idap',
     redis: '999999',
     smsSender: {
@@ -50,7 +50,7 @@ const config = {
       webApi: 'v1',
       mobileApi: 'v1'
     },
-    port: process.env.PORT || 4030,
+    port: process.env.PORT || 4035,
     db: 'mongodb://localhost/idap',
     redis: '999999',
     smsSender: {
@@ -88,7 +88,7 @@ const config = {
       webApi: 'v1',
       mobileApi: 'v1'
     },
-    port: process.env.PORT || 3000,
+    port: process.env.PORT || 4035,
     db: 'mongodb://localhost/idap',
     redis: '3423423',
     smsSender: {
