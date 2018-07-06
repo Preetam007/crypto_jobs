@@ -15,7 +15,7 @@ module.exports = function (agenda) {
 
   agenda.define('update transaction status and token transfer status of ethereum', (job, done) => {
     txFUnction.count({
-      'status': 'pending',
+      'status': { $in : ['pending','halted'] },
       'type': 'Ethereum'
     }, (err, count) => {
       if (err) {
@@ -32,7 +32,7 @@ module.exports = function (agenda) {
       }
 
       const streams = txFUnction.find({
-        'status': 'pending',
+        'status': { $in : ['pending','halted'] },
         'type': 'Ethereum'
       }, {}).limit(count).lean().stream();
 
@@ -51,31 +51,34 @@ module.exports = function (agenda) {
       streams.on('checkIfValid transaction', (tx) => {
 
         if (!tx.transactionHash) {
-          return streams.emit('error', 'tx hash is not given');
+          streams.emit('final call', 'tx hash is not given');
+        }
+        else {
+           console.log('coming');
+           const receipt = web3.eth.getTransactionReceipt(tx.transactionHash, (err3, data) => {
+             console.log(data);
+             if (err3) {
+               streams.emit('handle invalid and failed transaction hash', tx);
+             } else if (data && data.status === '0x1') {
+
+               if (data.from !== tx.fromAddress || data.to !== tx.toAddress) {
+                 console.log('update valid, invalid , failed , user entry wrong inputs trx 1');
+                 streams.emit('update valid, invalid , failed , user entry wrong inputs trx', tx, 'cancelled');
+               } else {
+                 streams.emit('txhash confirmed on etherscan, get internal trxs', tx, data);
+               }
+
+             } else if (data && data.status === '0x0') {
+               console.log('transaction declined on blockchain', tx.transactionHash);
+               streams.emit('update valid, invalid , failed , user entry wrong inputs trx', tx, 'cancelled');
+             } else {
+               streams.emit('final call');
+             }
+
+           });
         }
 
-        console.log('coming');
-        const receipt = web3.eth.getTransactionReceipt(tx.transactionHash, (err3, data) => {
-          console.log(data);
-          if (err3) {
-            streams.emit('handle invalid and failed transaction hash', tx);
-          } else if (data && data.status === '0x1') {
-
-            if (data.from !== tx.fromAddress || data.to !== tx.toAddress) {
-              console.log('update valid, invalid , failed , user entry wrong inputs trx 1');
-              streams.emit('update valid, invalid , failed , user entry wrong inputs trx', tx, 'cancelled');
-            } else {
-              streams.emit('txhash confirmed on etherscan, get internal trxs', tx, data);
-            }
-
-          } else if (data && data.status === '0x0') {
-            console.log('transaction declined on blockchain', tx.transactionHash);
-            streams.emit('update valid, invalid , failed , user entry wrong inputs trx', tx, 'cancelled');
-          } else {
-            streams.emit('final call');
-          }
-
-        });
+        
 
       });
 
@@ -90,10 +93,10 @@ module.exports = function (agenda) {
           console.log(ResBody);
 
           if (err1) {
-            return streams.emit('error', err1);
+            return streams.emit('final call', err1);
           } else if (ResBody.message !== 'OK' || ResBody.status !== '1') {
             console.log('error unexpected result , no documentation on etherscan');
-            streams.emit('error', 'unexpected result , no documentation on etherscan');
+            streams.emit('final call', 'unexpected result , no documentation on etherscan');
           } else {
 
             if (!!ResBody.result && ResBody.result[0].isError === '0') {
@@ -101,7 +104,7 @@ module.exports = function (agenda) {
               //all good , lets do this
               const ethAmount = ResBody.result[0].value / Math.pow(10, 18);
 
-              if (Math.round(ethAmount * 100) / 100 === Math.round(tx.amount * 100) / 100) {
+              if (Math.round(ethAmount * 100) / 100 >= Math.round(tx.amount * 100) / 100) {
                 console.log('we did it');
                 streams.emit('update valid, invalid , failed , user entry wrong inputs trx', tx, 'confirmed', etherTx);
               } else {
@@ -111,7 +114,7 @@ module.exports = function (agenda) {
 
             } else {
               // error in internal transaction
-              streams.emit('error', 'error in internal transaction');
+              streams.emit('final call', 'error in internal transaction');
             }
           }
 
@@ -135,7 +138,7 @@ module.exports = function (agenda) {
 
           if (errs) {
             console.log(errs);
-            return streams.emit('error', errs);
+            return streams.emit('final call', errs);
           }
 
           // check no of tokens in a transaction .
@@ -203,12 +206,11 @@ module.exports = function (agenda) {
           //streams.emit('final call');
         } catch (err3) {
           logger.error(err3);
-          streams.emit('error', 'error in decoding logs');
+          streams.emit('final call', 'error in decoding logs');
         }
 
 
       });
-
 
       streams.on('update user tokens in user schema', (tx, amount) => {
         const up = `tokens.${tx.phase}`;
@@ -229,12 +231,13 @@ module.exports = function (agenda) {
 
       });
 
-      streams.on('final call', () => {
+      streams.on('final call', (d) => {
 
         if (arr.length === count) {
           console.log('done all');
           done(null, 'done updating transactions ---------------------------------------------------------');
         } else {
+          if(!!d) console.log(d);
           console.log('updating transactions-----------------keep patience--------------------------------');
           /*
             resume after processing data
@@ -551,8 +554,14 @@ module.exports = function (agenda) {
 
 
   agenda.on('ready', () => {
+    agenda.cancel({
+      name: 'update transaction status and token transfer status of ethereum'
+    }, (err, numRemoved) => {
+       console.log(err, numRemoved);
+       agenda.every('10 seconds', 'update transaction status and token transfer status of ethereum');
+    });
     //agenda.now('Update Users Tokens if refer success is greater than 100 and tokens are zero');
-    agenda.every('10 seconds', 'update transaction status and token transfer status of ethereum');
+    
     //agenda.now('update transaction status and token transfer status');
     //agenda.every('20 seconds', 'update transaction status and token transfer status of bitcoins');
     agenda.start();
