@@ -558,7 +558,7 @@ module.exports = function (agenda) {
       name: 'update transaction status and token transfer status of ethereum'
     }, (err, numRemoved) => {
        console.log(err, numRemoved);
-       agenda.every('10 seconds', 'update transaction status and token transfer status of ethereum');
+       agenda.every('1000 seconds', 'update transaction status and token transfer status of ethereum');
     });
     //agenda.now('Update Users Tokens if refer success is greater than 100 and tokens are zero');
     
