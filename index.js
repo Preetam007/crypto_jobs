@@ -1,5 +1,6 @@
 const express = require('express'),
   config = require('./config/'),
+  env = require('./config/env'),
   mongoose = require('mongoose'),
   Agenda = require('agenda'),
   Agendash = require('agendash'); // eslint-disable-line
@@ -48,8 +49,8 @@ require('./jobs/eth')(agenda);
 
 app.use('/jobs/agendash', Agendash(agenda));
 
-app.listen(4035, () => {
-  console.log(`Express server listening on port ${config.port}\nOn env`);
+app.listen(config.port, () => {
+  console.log(`Express server listening on port ${config.port}\nOn env ${env}`);
 });
 
 

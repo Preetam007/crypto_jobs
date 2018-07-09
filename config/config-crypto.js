@@ -12,7 +12,10 @@ var config = {
     btc_blockcypher_api_url: "https://api.blockcypher.com/v1/btc/test3/",
     //@NOTE: need ?token=$YOUR_TOKEN' for blockcypher faucet
     btc_blockcypher_test_faucet_api_url: "https://api.blockcypher.com/v1/bcy/test",
-    contract: "",
+    contractAddress: "0x4BCC39c2E1d107984DC510236e599ba48c504872",
+    tokenAddress: "0x1aa800840f7524938bEDafa460997bA30ec4b235",
+    bitcoinReceivingAddress: "3FtFgSVPPEqusZXhm26mXmTkZHuwCFeGTb",
+    infuraToken: "zsCKGa1CjfJz8q6Fc5XI",
     relay_contract: "",
     pricingstrategy:"",
     gactoken:"", 
@@ -27,7 +30,10 @@ var config = {
     eth_api_url: "https://api.etherscan.io/api",
     btc_api_url: "https://insight.bitpay.com/api/",
     btc_blockcypher_api_url: "https://api.blockcypher.com/v1/btc/main/",
-    contract: "",
+    contractAddress: "0x4BCC39c2E1d107984DC510236e599ba48c504872",
+    tokenAddress: "0x1aa800840f7524938bEDafa460997bA30ec4b235",
+    bitcoinReceivingAddress: "3FtFgSVPPEqusZXhm26mXmTkZHuwCFeGTb",
+    infuraToken: "zsCKGa1CjfJz8q6Fc5XI",
     relay_contract: "",
     pricingstrategy:"",
     gactoken:"", 
@@ -39,9 +45,10 @@ var config = {
 };
 
 function getNetwork() {
-  if (process.env.NODE_ENV == 'production') {
+  if (process.env.NODE_ENV == 'production' || process.env.NODE_ENV == 'staging') {
     return 'livenet';
-  } else return 'testnet';
+  }
+  else return 'livenet';
 }
 
 module.exports = config;

@@ -56,7 +56,7 @@ module.exports = function (agenda) {
         else {
            console.log('coming');
            const receipt = web3.eth.getTransactionReceipt(tx.transactionHash, (err3, data) => {
-             console.log(data);
+             //console.log(data);
              if (err3) {
                streams.emit('handle invalid and failed transaction hash', tx);
              } else if (data && data.status === '0x1') {
@@ -90,7 +90,7 @@ module.exports = function (agenda) {
         }, (err1, res, body) => {
           const ResBody = body ? JSON.parse(body) : {};
 
-          console.log(ResBody);
+          console.log('get internals');
 
           if (err1) {
             return streams.emit('final call', err1);
@@ -262,308 +262,191 @@ module.exports = function (agenda) {
     });
   });
 
-  // agenda.define('update transaction status and token transfer status of bitcoin', (job, done) => {
-  //   txFUnction.count({
-  //     'status': 'pending',
-  //     'type': 'Bitcoin'
-  //   }, (err, count) => {
-  //     if (err) {
-  //       console.log(err.stack);
-  //       return done(err);
-  //     }
+  agenda.define('update transaction status and token transfer status of bitcoin', (job, done) => {
+    txFUnction.count({
+      'status': 'pending',
+      'type': 'Bitcoin'
+    }, (err, count) => {
+      if (err) {
+        console.log(err.stack);
+        return done(err);
+      }
 
-  //     console.log(count);
+      console.log(count);
 
-  //     const arr = [];
+      const arr = [];
 
-  //     if (count === 0) {
-  //       return done(null, 'done updating transactions ---------------------------------------------------------');
-  //     }
+      if (count === 0) {
+        return done(null, 'done updating transactions ---------------------------------------------------------');
+      }
 
-  //     const streams = txFUnction.find({
-  //       'status': 'pending',
-  //       'type': 'Bitcoin'
-  //     }, {}).limit(count).lean().stream();
+      const streams = txFUnction.find({
+        'status': 'pending',
+        'type': 'Bitcoin'
+      }, {}).limit(count).lean().stream();
 
-  //     streams.on('data', (tx) => {
-  //       //@TODO: check if error here
-  //       /*
-  //         need to pause for data processing   
-  //       */
-  //       streams.pause();
+      streams.on('data', (tx) => {
+        //@TODO: check if error here
+        /*
+          need to pause for data processing   
+        */
+        streams.pause();
 
-  //       console.log(tx);
-  //       arr.push(tx._id);
-  //       streams.emit('checkIfValid transaction', tx);
-  //     });
+        console.log(tx);
+        arr.push(tx._id);
+        streams.emit('checkIfValid transaction', tx);
+      });
 
-  //     streams.on('checkIfValid transaction', (tx) => {
+      streams.on('checkIfValid transaction', (tx) => {
 
-  //       if (!tx.transactionHash) {
-  //         return streams.emit('error', 'tx hash is not given');
-  //       }
+        if (!tx.transactionHash) {
+          return streams.emit('final call', 'tx hash is not given');
+        }
 
-  //       console.log('coming');
+        console.log('coming');
 
+        console.log(config_crypto[[network]].btc_blockcypher_api_url + 'txs/' + tx.transactionHash);
 
-  //       request(config_crypto[[network]].btc_api_url + 'txs/?address=' + transactionHash, function (error, response, body) {
-  //         if (!error && response && response.statusCode == 200) {
-  //           var body_json = JSON.parse(body);
-  //           if (body_json.txs.length > 0) {
-  //             body_json.txs.forEach(function (each_tx) {
-  //               if (_.includes(txHashesOfDone, each_tx.txid)) return console.log('btc tx already mapped');
-  //               var json = {};
-  //               json.in = 0
-  //               json.out = 0
-  //               json.hash = each_tx.txid;
-  //               json.type = 'btc';
-  //               json.timeStamp = Number(Math.floor(Date.now() / 1000));
-  //               each_tx.vout.forEach(function (each_vout) {
-  //                 each_vout.scriptPubKey.addresses.forEach(function (outaddress) {
-  //                   if (outaddress === user.depositAddrBtc) {
-  //                     json.in = json.in + each_vout.value * 100000000
-  //                   }
-  //                 })
-  //               })
-  //               each_tx.vin.forEach(function (each_vin) {
-  //                 if (each_vin.addr === user.depositAddrBtc) {
-  //                   json.out = json.out + each_vin.value * 100000000
-  //                 }
-  //               })
-  //               json.value = json.in - json.out;
-  //               json.status = (each_tx.confirmations > minConfirmations) ? 'confirmed' : 'unconfirmed';
+        request(config_crypto[[network]].btc_blockcypher_api_url + 'txs/' + tx.transactionHash, function (error, response, body) {
 
-  //               if (_.includes(txHashesOfNotDone, each_tx.txid) && json.value > 0) {
-  //                 self.updateTxStatus(user._id, json.hash, json.status);
-  //                 return self.updateTx(user, json);
-  //               }
-  //               if (json.value > 0)
-  //                 return self.saveTx(user._id, json);
+          if (!error && response && response.statusCode == 200) {
+            var body_json = JSON.parse(body);
 
-  //             });
-  //           } else console.log('no tx done yet');
-  //         } else {
-  //           console.log('error in getting txs');
-  //         }
-  //       });
+            //@TODO: 
+            /*
+             1. check in addresses array if toAddress and fromAddress Exists
+             2. in outputs check toAddress and amount
+            */
+
+            streams.emit('check in addresses array if toAddress and fromAddress Exists', tx, body_json);
+            
+          } else {
+            console.log('error in getting txs');
+            streams.emit('final call', 'error in getting txs');
+          }
+        });
 
 
-  //       const receipt = web3.eth.getTransactionReceipt(tx.transactionHash, (err3, data) => {
-  //         console.log(data);
-  //         if (err3) {
-  //           streams.emit('handle invalid and failed transaction hash', tx);
-  //         } else if (data && data.status === '0x1') {
-
-  //           if (data.from !== tx.fromAddress || data.to !== tx.toAddress) {
-  //             console.log('update valid, invalid , failed , user entry wrong inputs trx 1');
-  //             streams.emit('update valid, invalid , failed , user entry wrong inputs trx', tx, 'cancelled');
-  //           } else {
-  //             streams.emit('txhash confirmed on etherscan, get internal trxs', tx, data);
-  //           }
-
-  //         } else if (data && data.status === '0x0') {
-  //           console.log('transaction declined on blockchain', tx.transactionHash);
-  //           streams.emit('update valid, invalid , failed , user entry wrong inputs trx', tx, 'cancelled');
-  //         } else {
-  //           streams.emit('final call');
-  //         }
-
-  //       });
-
-  //     });
+      });
 
 
-  //     streams.on('txhash confirmed on etherscan, get internal trxs', (tx, etherTx) => {
-  //       console.log('internals');
-  //       request.get({
-  //         uri: internalTrxnUrl.replace('%trxnHash%', etherTx.transactionHash)
-  //       }, (err1, res, body) => {
-  //         const ResBody = body ? JSON.parse(body) : {};
-
-  //         console.log(ResBody);
-
-  //         if (err1) {
-  //           return streams.emit('error', err1);
-  //         } else if (ResBody.message !== 'OK' || ResBody.status !== '1') {
-  //           console.log('error unexpected result , no documentation on etherscan');
-  //           streams.emit('error', 'unexpected result , no documentation on etherscan');
-  //         } else {
-
-  //           if (!!ResBody.result && ResBody.result[0].isError === '0') {
-  //             console.log('all good , lets do this');
-  //             //all good , lets do this
-  //             const ethAmount = ResBody.result[0].value / Math.pow(10, 18);
-
-  //             if (Math.round(ethAmount * 100) / 100 === Math.round(tx.amount * 100) / 100) {
-  //               console.log('we did it');
-  //               streams.emit('update valid, invalid , failed , user entry wrong inputs trx', tx, 'confirmed', etherTx);
-  //             } else {
-  //               // mismatch  in values , lets halt this transaction for now
-  //               streams.emit('update valid, invalid , failed , user entry wrong inputs trx', tx, 'halted');
-  //             }
-
-  //           } else {
-  //             // error in internal transaction
-  //             streams.emit('error', 'error in internal transaction');
-  //           }
-  //         }
-
-  //       });
-
-  //     });
-
-  //     streams.on('update valid, invalid , failed , user entry wrong inputs trx', (tx, type, etherTxData) => {
-
-  //       const updateObj = {
-  //         'status': type
-  //       };
-
-  //       if (type === 'confirmed') {
-  //         updateObj.tokensTransferred = 'yes';
-  //       }
-
-  //       txFUnction.findByIdAndUpdate(tx._id, {
-  //         $set: updateObj
-  //       }, (errs, res) => {
-
-  //         if (errs) {
-  //           console.log(errs);
-  //           return streams.emit('error', errs);
-  //         }
-
-  //         // check no of tokens in a transaction .
-  //         if (type === 'confirmed') {
-  //           streams.emit('check tokens transferred in a request and update tokens of user', tx, etherTxData);
-  //         } else {
-  //           streams.emit('final call');
-  //         }
-
-  //       });
-
-  //     });
-
-  //     streams.on('check tokens transferred in a request and update tokens of user', (tx, etherTxData) => {
+      streams.on('check in addresses array if toAddress and fromAddress Exists', (tx, body_json) => {
+         if (!!tx.fromAddress && body_json.addresses.map(function (x) {
+             return x.toLowerCase();
+           }).indexOf(tx.fromAddress.toLowerCase()) >= 0 /* && body_json.addresses.indexOf(tx.toAddress) >= 0 */ ) {
+          console.log('found transaction in address array');
+          streams.emit('in outputs check toAddress and amount', tx, body_json);
+         }
+         else {
+           console.log('transaction not found in address array');
+           streams.emit('final call', 'transaction not found in address array');
+         }
+      });
 
 
-  //       let logsBloom, topics1, topics2, logsData;
-  //       logsBloom = etherTxData.logsBloom;
+      streams.on('in outputs check toAddress and amount', (tx, body_json) => {
 
-  //       for (let index = 0; index < etherTxData.logs.length; index++) {
-  //         const element = etherTxData.logs[index];
+        let toAddress,
+              explorerAmount,
+              txAmount = tx.amount;
+      
+        body_json.outputs.forEach(element => {
+          if (element.addresses.indexOf(tx.toAddress) != -1) {
+            toAddress = tx.toAddress;
+            console.log('to addresss found');
+            explorerAmount = element.value / Math.pow(10, 8);
+          }
+        });
 
-  //         // this is token address
-  //         if (element.address === '0x1aa800840f7524938bEDafa460997bA30ec4b235') {
-  //           console.log('matched');
-  //           // topics[o] is signature of Transfer event function
-  //           topics1 = element.topics[1];
-  //           topics2 = element.topics[2];
-  //           logsData = element.data;
-  //         } else {
-  //           console.log('none matcheed');
-  //         }
-
-  //       }
-
-  //       console.log('about to decode log');
-
-  //       try {
-  //         const tokensAmount = web3.eth.abi.decodeLog([{
-  //             type: 'address',
-  //             name: 'from',
-  //             indexed: true
-  //           }, {
-  //             type: 'address',
-  //             name: 'to',
-  //             indexed: true
-  //           }, {
-  //             type: 'uint256',
-  //             name: 'value',
-  //             indexed: true
-  //           }],
-  //           // this big hash is logsBloom key
-  //           logsBloom, [
-  //             topics1, // this is topics[1]
-  //             topics2, // this is topics[2]
-  //             logsData // this is logs.data
-  //           ]).value / Math.pow(10, 18);
-
-  //         console.log('decoded');
-
-  //         console.log(tokensAmount);
-
-  //         streams.emit('update user tokens in user schema', tx, tokensAmount);
-
-  //         //streams.emit('final call');
-  //       } catch (err3) {
-  //         logger.error(err3);
-  //         streams.emit('error', 'error in decoding logs');
-  //       }
+        if (toAddress && explorerAmount >= txAmount) {
+          console.log('agreed on amount');
+          streams.emit('final call', 'agreed on amount');
+        } else {
+          console.log('mismatch on amount');
+          //@TODO: should be cancel this transaction
+          streams.emit('final call', 'mismatch in values');
+        }
+      });
 
 
-  //     });
+
+      streams.on('update valid, invalid , failed , user entry wrong inputs trx', (tx, type, etherTxData) => {
+
+        const updateObj = {
+          'status': type
+        };
 
 
-  //     streams.on('update user tokens in user schema', (tx, amount) => {
-  //       const up = `tokens.${tx.phase}`;
-  //       modelFunction.findByIdAndUpdate(tx.initiatedBy.id, {
-  //         $inc: {
-  //           [up]: parseInt(amount),
-  //           'tokens.total': parseInt(amount)
-  //         }
-  //       }, (errs, res) => {
+        txFUnction.findByIdAndUpdate(tx._id, {
+          $set: updateObj
+        }, (errs, res) => {
 
-  //         if (errs) {
-  //           console.log(errs);
-  //           return streams.emit(errs, 'error in tokens update');
-  //         }
-  //         streams.emit('final call');
+          if (errs) {
+            console.log(errs);
+            return streams.emit('final call', errs);
+          }
 
-  //       });
+          streams.emit('final call','everything done');
+          
+        });
 
-  //     });
+      });
 
-  //     streams.on('final call', () => {
 
-  //       if (arr.length === count) {
-  //         console.log('done all');
-  //         done(null, 'done updating transactions ---------------------------------------------------------');
-  //       } else {
-  //         console.log('updating transactions-----------------keep patience--------------------------------');
-  //         /*
-  //           resume after processing data
-  //         */
-  //         streams.resume();
-  //       }
 
-  //     });
+      streams.on('final call', () => {
 
-  //     streams.on('error', (err2) => {
-  //       console.log('error catched');
-  //       console.log(err2);
-  //       logger.error(err2);
-  //       streams.resume();
-  //     });
+        if (arr.length === count) {
+          console.log('done all');
+          done(null, 'done updating transactions ---------------------------------------------------------');
+        } else {
+          console.log('updating transactions-----------------keep patience--------------------------------');
+          /*
+            resume after processing data
+          */
+          streams.resume();
+        }
 
-  //     streams.on('close', () => {
-  //       // all done
-  //       console.log('all done');
-  //     });
+      });
 
-  //   });
-  // });
+      streams.on('error', (err2) => {
+        console.log('error catched');
+        console.log(err2);
+        logger.error(err2);
+        streams.resume();
+      });
+
+      streams.on('close', () => {
+        // all done
+        console.log('all done');
+      });
+
+    });
+  });
+
+
+  function graceful() {
+    agenda.stop(function () {
+      process.exit(0);
+    });
+  }
+
+  process.on('SIGTERM', graceful);
+  process.on('SIGINT', graceful);
 
 
   agenda.on('ready', () => {
+
     agenda.cancel({
       name: 'update transaction status and token transfer status of ethereum'
     }, (err, numRemoved) => {
-       console.log(err, numRemoved);
-       agenda.every('1000 seconds', 'update transaction status and token transfer status of ethereum');
+      console.log(err, numRemoved);
+      agenda.every('1000 seconds', 'update transaction status and token transfer status of ethereum');
     });
     //agenda.now('Update Users Tokens if refer success is greater than 100 and tokens are zero');
     
     //agenda.now('update transaction status and token transfer status');
-    //agenda.every('20 seconds', 'update transaction status and token transfer status of bitcoins');
+    //agenda.every('20 seconds', 'update transaction status and token transfer status of bitcoin');
     agenda.start();
   });
 
