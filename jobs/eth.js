@@ -58,7 +58,7 @@ module.exports = function (agenda) {
            const receipt = web3.eth.getTransactionReceipt(tx.transactionHash, (err3, data) => {
              //console.log(data);
              if (err3) {
-               streams.emit('handle invalid and failed transaction hash', tx);
+               streams.emit('final call', 'error in txhash getTransactionReceipt');
              } else if (data && data.status === '0x1') {
 
                if (data.from !== tx.fromAddress || data.to !== tx.toAddress) {
@@ -109,6 +109,7 @@ module.exports = function (agenda) {
                 streams.emit('update valid, invalid , failed , user entry wrong inputs trx', tx, 'confirmed', etherTx);
               } else {
                 // mismatch  in values , lets halt this transaction for now
+                console.log('mismatch  in values , lets halt this transaction for now');
                 streams.emit('update valid, invalid , failed , user entry wrong inputs trx', tx, 'halted');
               }
 
@@ -137,7 +138,7 @@ module.exports = function (agenda) {
         }, (errs, res) => {
 
           if (errs) {
-            console.log(errs);
+            //console.log(errs);
             return streams.emit('final call', errs);
           }
 
@@ -222,8 +223,7 @@ module.exports = function (agenda) {
         }, (errs, res) => {
 
           if (errs) {
-            console.log(errs);
-            return streams.emit(errs, 'error in tokens update');
+            return streams.emit('final call', 'update user tokens in user schema');
           }
           streams.emit('final call');
 
