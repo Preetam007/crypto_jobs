@@ -51,7 +51,8 @@ module.exports = function (agenda) {
       streams.on('checkIfValid transaction', (tx) => {
 
         if (!tx.transactionHash) {
-          streams.emit('final call', 'tx hash is not given');
+          console.log('tx hash is not given');
+          streams.emit('update valid, invalid , failed , user entry wrong inputs trx', tx, 'cancelled');
         }
         else {
            console.log('coming');
