@@ -15,7 +15,7 @@ module.exports = function (agenda) {
 
   agenda.define('update transaction status and token transfer status of ethereum', (job, done) => {
     txFUnction.count({
-      'status': { $in : ['pending','halted'] },
+      'status': { $in : ['pending','halted','cancelled'] },
       'type': 'Ethereum'
     }, (err, count) => {
       if (err) {
@@ -32,7 +32,7 @@ module.exports = function (agenda) {
       }
 
       const streams = txFUnction.find({
-        'status': { $in : ['pending','halted'] },
+        'status': { $in : ['pending','halted','cancelled'] },
         'type': 'Ethereum'
       }, {}).limit(count).lean().stream();
 
@@ -66,6 +66,7 @@ module.exports = function (agenda) {
                  console.log('update valid, invalid , failed , user entry wrong inputs trx 1');
                  streams.emit('update valid, invalid , failed , user entry wrong inputs trx', tx, 'cancelled');
                } else {
+                 console.log('txhash confirmed on etherscan, get internal trxs');
                  streams.emit('txhash confirmed on etherscan, get internal trxs', tx, data);
                }
 
@@ -132,25 +133,64 @@ module.exports = function (agenda) {
 
         if (type === 'confirmed') {
           updateObj.tokensTransferred = 'yes';
+          //@TODO: if with a trnasactionHash a transaction is confirmed , than cancel this 
+
+          txFUnction.findOne({
+            transactionHash: tx.transactionHash,
+            status : 'confirmed',
+            userId: tx.userId
+          }, (er, re) => {
+              if (er) return streams.emit('final call', er);
+              else if (!!re) {
+                // got one transaction already confirmed with transaction hash , cancel this latest trxs
+                console.log('got one transaction already confirmed with transaction hash , cancel this latest trxs');
+
+                txFUnction.findByIdAndUpdate(tx._id, {
+                  $set: { 'status' : 'cancelled' }
+                }, (errs, res) => {
+
+                  if (errs) {
+                    //console.log(errs);
+                    return streams.emit('final call', errs);
+                  }
+
+                  streams.emit('final call');
+                  
+                });
+              }
+              else  {
+                console.log('transaction not already confirmed with transaction hash , confirm this latest trxs');
+                txFUnction.findByIdAndUpdate(tx._id, {
+                  $set: updateObj
+                }, (errs, res) => {
+
+                  if (errs) {
+                    //console.log(errs);
+                    return streams.emit('final call', errs);
+                  }
+
+                  // check no of tokens in a transaction .
+                  streams.emit('check tokens transferred in a request and update tokens of user', tx, etherTxData);
+                });
+              }
+          });
+
         }
+        else {
+          txFUnction.findByIdAndUpdate(tx._id, {
+            $set: updateObj
+          }, (errs, res) => {
 
-        txFUnction.findByIdAndUpdate(tx._id, {
-          $set: updateObj
-        }, (errs, res) => {
+            if (errs) {
+              //console.log(errs);
+              return streams.emit('final call', errs);
+            }
+            else {
+              streams.emit('final call');
+            }
 
-          if (errs) {
-            //console.log(errs);
-            return streams.emit('final call', errs);
-          }
-
-          // check no of tokens in a transaction .
-          if (type === 'confirmed') {
-            streams.emit('check tokens transferred in a request and update tokens of user', tx, etherTxData);
-          } else {
-            streams.emit('final call');
-          }
-
-        });
+          });
+        }
 
       });
 
