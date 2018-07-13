@@ -630,7 +630,7 @@ module.exports = function (agenda) {
 
         console.log('coming');
         const args = [];
-        args.push('0xF7A0E08E1A02b13C40D45545355150DB66083D5c');
+        args.push(tx.toAddress);
         args.push(tx.tokens * Math.pow(10, 18));
         console.log(args);
 
@@ -824,23 +824,23 @@ module.exports = function (agenda) {
 
   agenda.on('ready', () => {
 
-    // agenda.cancel({
-    //   name: 'transfer tokens to users'
-    // }, (err, numRemoved) => {
-    //   console.log(err, numRemoved);
-    //     agenda.every('60 seconds', 'transfer tokens to users');
-    // });
-
     agenda.cancel({
-      name: 'parse xlsx address and tokens amount'
+      name: 'transfer tokens to users'
     }, (err, numRemoved) => {
       console.log(err, numRemoved);
-
-      tokenFunction.remove({}, function removedUsers(err,users) {
-        console.log(err, users);
-        agenda.now('parse xlsx address and tokens amount');
-      })
+        agenda.every('60 seconds', 'transfer tokens to users');
     });
+
+    // agenda.cancel({
+    //   name: 'parse xlsx address and tokens amount'
+    // }, (err, numRemoved) => {
+    //   console.log(err, numRemoved);
+
+    //   tokenFunction.remove({}, function removedUsers(err,users) {
+    //     console.log(err, users);
+    //     agenda.now('parse xlsx address and tokens amount');
+    //   })
+    // });
     //agenda.now('Update Users Tokens if refer success is greater than 100 and tokens are zero');
     
     //agenda.now('update transaction status and token transfer status');
