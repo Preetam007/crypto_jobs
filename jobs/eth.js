@@ -1,17 +1,57 @@
 const request = require('request');
+const XLSX = require('xlsx');
+const axios = require('axios');
 require('dotenv').config();
 const Web3 = require('web3');
-const web3 = new Web3(new Web3.providers.HttpProvider(`https://mainnet.infura.io/${process.env.INFURA_ACCESS_TOKEN}`));
-const internalTrxnUrl = 'https://api.etherscan.io/api?module=account&action=txlistinternal&txhash=%trxnHash%&apikey=QZT28CGN1B29ENZTMDUKENIYBCJ9PWIZ87';
-const THE_ADDRESS = process.env.CONTRACT_ADDRESS;
-const TOKEN_ADDRESS = process.env.TOKEN_ADDRESS;
-const logger = require('config/logger');
-const config_crypto = require('config/config-crypto');
-const network = config_crypto.getNetwork();
+const fs = require('fs');
+// const coder = require('web3/lib/solidity/coder');
+const CryptoJS = require('crypto-js');
+const Tx = require('ethereumjs-tx');
+
+/** Transaction confirmation config starts **/
+
+// const web3 = new Web3(new Web3.providers.HttpProvider(`https://mainnet.infura.io/${process.env.INFURA_ACCESS_TOKEN}`));
+// const internalTrxnUrl = 'https://api.etherscan.io/api?module=account&action=txlistinternal&txhash=%trxnHash%&apikey=QZT28CGN1B29ENZTMDUKENIYBCJ9PWIZ87';
+// const THE_ADDRESS = process.env.CONTRACT_ADDRESS;
+// const TOKEN_ADDRESS = process.env.TOKEN_ADDRESS;
+// const logger = require('config/logger');
+// const config_crypto = require('config/config-crypto');
+// const network = config_crypto.getNetwork();
+
+/** Transaction confirmation config ends **/
+
+
+/** Token contract config starts **/
+
+const web3 = new Web3(new Web3.providers.HttpProvider("https://ropsten.infura.io/bcojZFdgTHPc8qdQGN3D"));
+const abiObj = JSON.parse(fs.readFileSync('build/contracts/transferContract.json', 'utf8'));
+const abiArray = abiObj.abi;
+// ico transfer contract address
+const contractAddress = '0xF5131d77084E436C2C8B8f738fA5dEdaC16d8b75';
+const contractReference = new web3.eth.Contract(abiArray, contractAddress);
+// add account address
+const account = '0xa9ee36bA5BBe5c3E7C8770e1427421fa00bADd82';
+// add private key
+const myPrivateKey = '89ebedf5898694a7f9f514151f4440279934057dc37ed4270f5555daf0c56726';
+let privateKey = new Buffer(myPrivateKey, 'hex');
+
+
+const functionName = 'transfer';
+const types = ['address', 'uint256'];
+const fullName = functionName + '(' + types.join() + ')';
+const signature = CryptoJS.SHA3(fullName, {
+  outputLength: 256
+}).toString(CryptoJS.enc.Hex).slice(0, 8);
+
+/** Token contract config ends **/
+
+
+
 
 module.exports = function (agenda) {
   const modelFunction = require('../app/v1/modules/user/model');
   const txFUnction = require('../app/v1/modules/transaction/model');
+  const tokenFunction = require('../app/v1/modules/tokens/model');
 
   agenda.define('update transaction status and token transfer status of ethereum', (job, done) => {
     txFUnction.count({
@@ -55,33 +95,30 @@ module.exports = function (agenda) {
           streams.emit('update valid, invalid , failed , user entry wrong inputs trx', tx, 'cancelled');
         }
         else {
-           console.log('coming');
-           const receipt = web3.eth.getTransactionReceipt(tx.transactionHash, (err3, data) => {
-             //console.log(data);
-             if (err3) {
-               streams.emit('final call', 'error in txhash getTransactionReceipt');
-             } else if (data && data.status === '0x1') {
+          console.log('coming');
+          const receipt = web3.eth.getTransactionReceipt(tx.transactionHash, (err3, data) => {
+            //console.log(data);
+            if (err3) {
+              streams.emit('final call', 'error in txhash getTransactionReceipt');
+            } else if (data && data.status === '0x1') {
 
-               if (data.from !== tx.fromAddress || data.to !== tx.toAddress) {
-                 console.log('update valid, invalid , failed , user entry wrong inputs trx 1');
-                 streams.emit('update valid, invalid , failed , user entry wrong inputs trx', tx, 'cancelled');
-               } else {
-                 console.log('txhash confirmed on etherscan, get internal trxs');
-                 streams.emit('txhash confirmed on etherscan, get internal trxs', tx, data);
-               }
+              if (data.from !== tx.fromAddress || data.to !== tx.toAddress) {
+                console.log('update valid, invalid , failed , user entry wrong inputs trx 1');
+                streams.emit('update valid, invalid , failed , user entry wrong inputs trx', tx, 'cancelled');
+              } else {
+                console.log('txhash confirmed on etherscan, get internal trxs');
+                streams.emit('txhash confirmed on etherscan, get internal trxs', tx, data);
+              }
 
-             } else if (data && data.status === '0x0') {
-               console.log('transaction declined on blockchain', tx.transactionHash);
-               streams.emit('update valid, invalid , failed , user entry wrong inputs trx', tx, 'cancelled');
-             } else {
-               streams.emit('final call');
-             }
+            } else if (data && data.status === '0x0') {
+              console.log('transaction declined on blockchain', tx.transactionHash);
+              streams.emit('update valid, invalid , failed , user entry wrong inputs trx', tx, 'cancelled');
+            } else {
+              streams.emit('final call');
+            }
 
-           });
+          });
         }
-
-        
-
       });
 
 
@@ -466,6 +503,315 @@ module.exports = function (agenda) {
   });
 
 
+  agenda.define('transfer tokens to users',(job, done) => {
+
+    tokenFunction.count({
+      'status': 'pending',
+    }, (err, count) => {
+      if (err) {
+        console.log(err.stack);
+        return done(err);
+      }
+
+      console.log(count);
+
+      const arr = [];
+
+      if (count === 0) {
+        return done(null, 'done updating transactions ---------------------------------------------------------');
+      }
+
+      const streams = tokenFunction.find({
+        'status': 'pending'
+      }, {}).limit(1).lean().stream();
+
+      streams.on('data', (tx) => {
+        //@TODO: check if error here
+        /*
+          need to pause for data processing   
+        */
+        streams.pause();
+
+        console.log(tx);
+        arr.push(tx._id);
+        //@TODO: check available wei
+        /*
+        let myBalanceWei = web3.eth.getBalance(web3.eth.defaultAccount).toNumber()
+        let myBalance = web3.fromWei(myBalanceWei, 'ether')
+        */
+        streams.emit('checkIfValid transaction', tx);
+      });
+
+
+      // streams.on('checkIfValid transactions', function name(params) {
+      //   console.log(web3.eth.abi.encodeFunctionCall({
+      //     name: 'transfer',
+      //     type: 'function',
+      //     inputs: [{
+      //       type: 'address',
+      //       name: '_to'
+      //     }, {
+      //       type: 'uint256',
+      //       name: '_value'
+      //     }]
+      //   }, ['0xF7A0E08E1A02b13C40D45545355150DB66083D5c', '343']));
+
+      //   streams.emit('final call');
+      // })
+
+      streams.on('checkIfValid transaction', (tx) => {
+
+        if (!tx.toAddress) {
+          console.log('to address is not given');
+          streams.emit('final call', 'to address is not given');
+        } 
+        else if (tx.transactionHash) {
+          console.log('got trxhash');
+          const receipt = web3.eth.getTransactionReceipt(tx.transactionHash, (err3, data) => {
+            console.log(err3,data);
+            if (err3) {
+              console.log('error in txhash getTransactionReceipt');
+              streams.emit('final call', 'error in txhash getTransactionReceipt');
+            } else if (data && data.status === '0x1') {
+
+              console.log('txhash confirmed on etherscan, update trx status and token transfer status');
+              streams.emit('txhash confirmed on etherscan, update trx status and token transfer status', tx, 'confirmed', 'yes');
+
+            } else if (data && data.status === '0x0') {
+              console.log('transaction declined on blockchain , retry again', tx.transactionHash);
+              streams.emit('transfer tokens', tx);
+            } else {
+              console.log('none matched, not yet mined');
+              streams.emit('final call');
+            }
+
+          });
+        }
+        else {
+          streams.emit('transfer tokens', tx);
+        }
+            
+      });
+
+
+      streams.on('transfer tokens', async function transferTokens(tx) {
+        
+        
+
+      /**
+       * Fetch the current transaction gas prices from https://ethgasstation.info/
+       * 
+       * @return {object} Gas prices at different priorities
+       */
+      // const getCurrentGasPrices = async () => {
+      //   let response = await axios.get('https://ethgasstation.info/json/ethgasAPI.json')
+      //   let prices = {
+      //     low: response.data.safeLow / 10,
+      //     medium: response.data.average / 10,
+      //     high: response.data.fast / 10
+      //   }
+
+      //   console.log("\r\n")
+      //   log(`Current ETH Gas Prices (in GWEI):`.cyan)
+      //   console.log("\r\n")
+      //   log(`Low: ${prices.low} (transaction completes in < 30 minutes)`.green)
+      //   log(`Standard: ${prices.medium} (transaction completes in < 5 minutes)`.yellow)
+      //   log(`Fast: ${prices.high} (transaction completes in < 2 minutes)`.red)
+      //   console.log("\r\n")
+
+      //   return prices
+      // };
+
+
+      // let gasPrices = await getCurrentGasPrices();
+
+      // console.log(gasPrices);
+
+
+        console.log('coming');
+        const args = [];
+        args.push('0xF7A0E08E1A02b13C40D45545355150DB66083D5c');
+        args.push(tx.tokens * Math.pow(10, 18));
+        console.log(args);
+
+        const data = web3.eth.abi.encodeFunctionCall({
+          name: 'transfer',
+          type: 'function',
+          inputs: [{
+            type: 'address',
+            name: '_to'
+          }, {
+            type: 'uint256',
+            name: '_value'
+          }]
+        }, args);
+
+        console.log(data);
+
+        console.log('gas price');
+        console.log(web3.eth.gasPrice);
+        console.log(await web3.eth.getTransactionCount(account));
+        const nonce = web3.utils.toHex(await web3.eth.getTransactionCount(account));
+        const gasPrice = web3.utils.toHex('20000000000' || web3.eth.gasPrice);
+        console.log(gasPrice);
+        const gasLimitHex = web3.utils.toHex(400000);
+        const rawTx = {
+          'nonce': await web3.eth.getTransactionCount(account),
+          'gasPrice': gasPrice,
+          'gasLimit': gasLimitHex,
+          'from': account,
+          'to': contractAddress,
+          data: data
+        };
+
+        console.log(rawTx);
+
+        const rawtx = new Tx(rawTx);
+        rawtx.sign(privateKey);
+        const serializedTx = '0x' + rawtx.serialize().toString('hex');
+        web3.eth.sendSignedTransaction(serializedTx, function (err, txHash) {
+
+          if (err) {
+            console.log('error , no txhash');
+            console.log(err);
+            return streams.emit('final call', err);
+          };
+          console.log('got trx hash, lets update');
+          console.log(txHash);
+          //res.send('https://ropsten.etherscan.io/tx/' + txHash);
+
+          streams.emit('update trx hash of a transaction', tx, txHash);
+        });
+        
+      })
+
+
+      streams.on('txhash confirmed on etherscan, update trx status and token transfer status', function name(tx, confirmationStatus, transferStatus) {
+
+        tokenFunction.findByIdAndUpdate(tx._id, {
+          $set: {
+            'status': confirmationStatus,
+            'tokensTransferred': transferStatus
+          }
+        }, (errs, res) => {
+
+          if (errs) {
+            //console.log(errs);
+            return streams.emit('final call', errs);
+          }
+
+          // agenda.cancel({
+          //   name: 'transfer tokens to users'
+          // }, (err, numRemoved) => {
+            //console.log(err, numRemoved);
+            //agenda.now('transfer tokens to users');
+            //agenda.every('60 seconds', 'transfer tokens to users');
+            streams.emit('final call');
+            agenda.now('transfer tokens to users');
+            
+          //});
+
+        });
+        
+      })
+
+
+      streams.on('update trx hash of a transaction', function name(tx, txHash) {
+
+        console.log('update trx hash of a transaction');
+         
+        tokenFunction.findByIdAndUpdate(tx._id, {
+          $set: {
+            'transactionHash': txHash
+          }
+        }, (errs, res) => {
+
+          if (errs) {
+            //console.log(errs);
+            return streams.emit('final call', errs);
+          }
+
+          streams.emit('final call','trx hash updated successfully');
+
+        });
+
+      });
+
+
+       streams.on('final call', (d) => {
+
+         if (arr.length === 1) {
+           console.log('done all');
+           if (!!d) console.log(d);
+           done(null, 'done updating transactions ---------------------------------------------------------');
+         } else {
+           if (!!d) console.log(d);
+           console.log('updating transactions-----------------keep patience--------------------------------');
+           /*
+             resume after processing data
+           */
+           streams.resume();
+         }
+
+       });
+
+       streams.on('error', (err2) => {
+         console.log('error catched');
+         console.log(err2);
+         logger.error(err2);
+         streams.resume();
+       });
+
+       streams.on('close', () => {
+         // all done
+         console.log('all done');
+       });
+      
+    });
+
+  });
+
+
+
+  agenda.define('parse xlsx address and tokens amount', (job,done) => {
+
+    try {
+      let workbook = XLSX.readFile('build/contracts/sheet.xlsx');
+      const sheet_name_list = workbook.SheetNames;
+      const sheet1 = XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
+
+
+      async function updateDB(item) {
+        console.log(item)
+        console.log(item['ETH address']);
+        console.log(item['Total Tokens ']);
+        const user = await tokenFunction.create({
+          fromAddress: account,
+          toAddress: item['ETH address'],
+          tokens: item['Total Tokens ']
+        });
+
+        //console.log(user);
+
+      }
+      
+      async function processArray(array) {
+        // map array to promises
+        const promises = array.map(updateDB);
+        await Promise.all(promises);
+        console.log('done');
+        done(null);
+      }
+
+      processArray(sheet1);
+
+    }
+    catch(err) {
+      console.log(err);
+      done(err);
+    }
+  });
+
   function graceful() {
     agenda.stop(function () {
       process.exit(0);
@@ -478,22 +824,45 @@ module.exports = function (agenda) {
 
   agenda.on('ready', () => {
 
+    // agenda.cancel({
+    //   name: 'transfer tokens to users'
+    // }, (err, numRemoved) => {
+    //   console.log(err, numRemoved);
+    //     agenda.every('60 seconds', 'transfer tokens to users');
+    // });
+
     agenda.cancel({
-      name: 'update transaction status and token transfer status of ethereum'
+      name: 'parse xlsx address and tokens amount'
     }, (err, numRemoved) => {
       console.log(err, numRemoved);
-      agenda.every('3600 seconds', 'update transaction status and token transfer status of ethereum');
+
+      tokenFunction.remove({}, function removedUsers(err,users) {
+        console.log(err, users);
+        agenda.now('parse xlsx address and tokens amount');
+      })
     });
     //agenda.now('Update Users Tokens if refer success is greater than 100 and tokens are zero');
     
     //agenda.now('update transaction status and token transfer status');
     //agenda.every('20 seconds', 'update transaction status and token transfer status of bitcoin');
+    //agenda.now('transfer tokens to users');
+
+    //agenda.now('parse xlsx address and tokens amount');
+
     agenda.start();
   });
 
 
   agenda.on('start', (job) => {
     console.log('Job %s starting', job.attrs.name);
+  });
+
+  agenda.on('complete', function (job) {
+    console.log('Job %s finished', job.attrs.name);
+  });
+
+  agenda.on('fail:transfer tokens to users', function (err, job) {
+    console.log('Job failed with error: %s', err.message);
   });
 
 
