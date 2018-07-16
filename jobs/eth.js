@@ -650,13 +650,15 @@ module.exports = function (agenda) {
 
         console.log('gas price');
         console.log(web3.eth.gasPrice);
-        console.log(await web3.eth.getTransactionCount(account));
-        const nonce = web3.utils.toHex(await web3.eth.getTransactionCount(account));
+        // console.log(await web3.eth.getTransactionCount(account));
+        //const nonce = web3.utils.toHex(await web3.eth.getTransactionCount(account));
+        const nonce = await web3.eth.getTransactionCount(account);
+        console.log(nonce);
         const gasPrice = web3.utils.toHex('20000000000' || web3.eth.gasPrice);
         console.log(gasPrice);
         const gasLimitHex = web3.utils.toHex(400000);
         const rawTx = {
-          'nonce': await web3.eth.getTransactionCount(account),
+          'nonce': nonce,
           'gasPrice': gasPrice,
           'gasLimit': gasLimitHex,
           'from': account,
