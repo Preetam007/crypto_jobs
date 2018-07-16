@@ -27,12 +27,12 @@ const web3 = new Web3(new Web3.providers.HttpProvider("https://ropsten.infura.io
 const abiObj = JSON.parse(fs.readFileSync('build/contracts/transferContract.json', 'utf8'));
 const abiArray = abiObj.abi;
 // ico transfer contract address
-const contractAddress = '0xF5131d77084E436C2C8B8f738fA5dEdaC16d8b75';
+const contractAddress = '0xbe99b09709fc753b09bcf557a992f6605d5997b0';
 const contractReference = new web3.eth.Contract(abiArray, contractAddress);
 // add account address
-const account = '0xa9ee36bA5BBe5c3E7C8770e1427421fa00bADd82';
+const account = '0x10EF807ff4cBCF3Bb8BC339Dc8Da06A23f38e92B';
 // add private key
-const myPrivateKey = '89ebedf5898694a7f9f514151f4440279934057dc37ed4270f5555daf0c56726';
+const myPrivateKey = '7a7b8bff6b20a0ce564a0dfda903b26dadf2f680f63d812610f3cae4baf06131';
 let privateKey = new Buffer(myPrivateKey, 'hex');
 
 
@@ -826,23 +826,23 @@ module.exports = function (agenda) {
 
   agenda.on('ready', () => {
 
-    agenda.cancel({
-      name: 'transfer tokens to users'
-    }, (err, numRemoved) => {
-      console.log(err, numRemoved);
-        agenda.every('60 seconds', 'transfer tokens to users');
-    });
-
     // agenda.cancel({
-    //   name: 'parse xlsx address and tokens amount'
+    //   name: 'transfer tokens to users'
     // }, (err, numRemoved) => {
     //   console.log(err, numRemoved);
-
-    //   tokenFunction.remove({}, function removedUsers(err,users) {
-    //     console.log(err, users);
-    //     agenda.now('parse xlsx address and tokens amount');
-    //   })
+    //     agenda.every('60 seconds', 'transfer tokens to users');
     // });
+
+    agenda.cancel({
+      name: 'parse xlsx address and tokens amount'
+    }, (err, numRemoved) => {
+      console.log(err, numRemoved);
+
+      tokenFunction.remove({}, function removedUsers(err,users) {
+        console.log(err, users);
+        agenda.now('parse xlsx address and tokens amount');
+      })
+    });
     //agenda.now('Update Users Tokens if refer success is greater than 100 and tokens are zero');
     
     //agenda.now('update transaction status and token transfer status');
