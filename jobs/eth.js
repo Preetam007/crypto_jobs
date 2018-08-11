@@ -23,7 +23,7 @@ const Tx = require('ethereumjs-tx');
 
 /** Token contract config starts **/
 
-const web3 = new Web3(new Web3.providers.HttpProvider("https://ropsten.infura.io/bcojZFdgTHPc8qdQGN3D"));
+const web3 = new Web3(new Web3.providers.HttpProvider("https://mainnet.infura.io/bcojZFdgTHPc8qdQGN3D"));
 const abiObj = JSON.parse(fs.readFileSync('build/contracts/transferContract.json', 'utf8'));
 const abiArray = abiObj.abi;
 // ico transfer contract address
@@ -72,7 +72,7 @@ module.exports = function (agenda) {
       }
 
       const streams = txFUnction.find({
-        'status': { $in : ['pending','halted','cancelled'] },
+        'status': { $in : ['pending'] },
         'type': 'Ethereum'
       }, {}).limit(count).lean().stream();
 
@@ -114,6 +114,7 @@ module.exports = function (agenda) {
               console.log('transaction declined on blockchain', tx.transactionHash);
               streams.emit('update valid, invalid , failed , user entry wrong inputs trx', tx, 'cancelled');
             } else {
+              console.log('not yet mined');
               streams.emit('final call');
             }
 
@@ -170,7 +171,7 @@ module.exports = function (agenda) {
 
         if (type === 'confirmed') {
           updateObj.tokensTransferred = 'yes';
-          //@TODO: if with a trnasactionHash a transaction is confirmed , than cancel this 
+          //@TODO: if with a trnasaction Hash a transaction is confirmed , than cancel this 
 
           txFUnction.findOne({
             transactionHash: tx.transactionHash,
@@ -240,6 +241,7 @@ module.exports = function (agenda) {
         for (let index = 0; index < etherTxData.logs.length; index++) {
           const element = etherTxData.logs[index];
 
+          //@TODO: update before live
           // this is token address
           if (element.address === '0x1aa800840f7524938bEDafa460997bA30ec4b235') {
             console.log('matched');
@@ -561,9 +563,9 @@ module.exports = function (agenda) {
 
       streams.on('checkIfValid transaction', (tx) => {
 
-        if (!tx.toAddress) {
-          console.log('to address is not given');
-          streams.emit('final call', 'to address is not given');
+        if (!tx.toAddress || !web3.utils.isAddress(tx.toAddress)) {
+          console.log('to address is not given or not valid');
+          streams.emit('update trx status and token transfer status', tx, 'halted', 'no');
         } 
         else if (tx.transactionHash) {
           console.log('got trxhash');
@@ -575,13 +577,15 @@ module.exports = function (agenda) {
             } else if (data && data.status === '0x1') {
 
               console.log('txhash confirmed on etherscan, update trx status and token transfer status');
-              streams.emit('txhash confirmed on etherscan, update trx status and token transfer status', tx, 'confirmed', 'yes');
+              streams.emit('update trx status and token transfer status', tx, 'confirmed', 'yes');
 
             } else if (data && data.status === '0x0') {
               console.log('transaction declined on blockchain , retry again', tx.transactionHash);
               streams.emit('transfer tokens', tx);
             } else {
               console.log('none matched, not yet mined');
+              console.log(err3,data);
+              //agenda.schedule('in 10 seconds', 'transfer tokens to users');
               streams.emit('final call');
             }
 
@@ -631,7 +635,7 @@ module.exports = function (agenda) {
         console.log('coming');
         const args = [];
         args.push(tx.toAddress);
-        args.push(tx.tokens * Math.pow(10, 18));
+        args.push(tx.tokens * Math.pow(10, 8));
         console.log(args);
 
         const data = web3.eth.abi.encodeFunctionCall({
@@ -654,9 +658,9 @@ module.exports = function (agenda) {
         //const nonce = web3.utils.toHex(await web3.eth.getTransactionCount(account));
         const nonce = await web3.eth.getTransactionCount(account);
         console.log(nonce);
-        const gasPrice = web3.utils.toHex('20000000000' || web3.eth.gasPrice);
+        const gasPrice = web3.utils.toHex('7000000000' || web3.eth.gasPrice);
         console.log(gasPrice);
-        const gasLimitHex = web3.utils.toHex(400000);
+        const gasLimitHex = web3.utils.toHex(250000);
         const rawTx = {
           'nonce': nonce,
           'gasPrice': gasPrice,
@@ -676,6 +680,7 @@ module.exports = function (agenda) {
           if (err) {
             console.log('error , no txhash');
             console.log(err);
+            console.log(txHash);
             return streams.emit('final call', err);
           };
           console.log('got trx hash, lets update');
@@ -688,7 +693,7 @@ module.exports = function (agenda) {
       })
 
 
-      streams.on('txhash confirmed on etherscan, update trx status and token transfer status', function name(tx, confirmationStatus, transferStatus) {
+      streams.on('update trx status and token transfer status', function name(tx, confirmationStatus, transferStatus) {
 
         tokenFunction.findByIdAndUpdate(tx._id, {
           $set: {
@@ -715,7 +720,7 @@ module.exports = function (agenda) {
 
         });
         
-      })
+      });
 
 
       streams.on('update trx hash of a transaction', function name(tx, txHash) {
@@ -774,6 +779,99 @@ module.exports = function (agenda) {
   });
 
 
+  agenda.define('delete tokens to users', (job, done) => {
+
+    tokenFunction.count({
+      'status': 'pending',
+    }, (err, count) => {
+      if (err) {
+        console.log(err.stack);
+        return done(err);
+      }
+
+      console.log(count);
+
+      const arr = [];
+
+      if (count === 0) {
+        return done(null, 'done updating transactions ---------------------------------------------------------');
+      }
+
+      const streams = tokenFunction.find({
+        'status': 'pending'
+      }, {}).limit(count).lean().stream();
+
+      streams.on('data', (tx) => {
+        //@TODO: check if error here
+        /*
+          need to pause for data processing   
+        */
+        streams.pause();
+
+        console.log(tx.toAddress);
+        arr.push(tx._id);
+        streams.emit('delete entry', tx);
+      });
+
+
+      streams.on('delete entry', function (tx) {
+
+        tokenFunction.findOneAndRemove( { 'toAddress' : tx.toAddress }, {
+        }, (errs, res) => {
+
+          if (errs) {
+            //console.log(errs);
+            return streams.emit('final call', errs);
+          }
+
+          if (tx.toAddress === '0x78Ca20af5820F23102cC6eCcF43dCC528bB2Aa03') {
+            console.log('got last address');
+            streams.emit('final call', tx.toAddress);
+          }
+          else {
+            streams.emit('final call');
+          }
+
+        });
+
+      })
+
+
+      
+      streams.on('final call', (d) => {
+
+        if (arr.length === count || d === '0x78Ca20af5820F23102cC6eCcF43dCC528bB2Aa03') {
+          console.log('done all');
+          if (!!d) console.log(d);
+          done(null, 'done updating transactions ---------------------------------------------------------');
+        } else {
+          if (!!d) console.log(d);
+          console.log('updating transactions-----------------keep patience--------------------------------');
+          /*
+            resume after processing data
+          */
+          streams.resume();
+        }
+
+      });
+
+      streams.on('error', (err2) => {
+        console.log('error catched');
+        console.log(err2);
+        logger.error(err2);
+        streams.resume();
+      });
+
+      streams.on('close', () => {
+        // all done
+        console.log('all done');
+      });
+
+    });
+
+  });
+
+
 
   agenda.define('parse xlsx address and tokens amount', (job,done) => {
 
@@ -826,23 +924,32 @@ module.exports = function (agenda) {
 
   agenda.on('ready', () => {
 
+    
+
     // agenda.cancel({
-    //   name: 'transfer tokens to users'
+    //   name: 'delete tokens to users'
     // }, (err, numRemoved) => {
     //   console.log(err, numRemoved);
-    //     agenda.every('60 seconds', 'transfer tokens to users');
+    //   agenda.now('delete tokens to users');
     // });
 
     agenda.cancel({
-      name: 'parse xlsx address and tokens amount'
+      name: 'transfer tokens to users'
     }, (err, numRemoved) => {
       console.log(err, numRemoved);
-
-      tokenFunction.remove({}, function removedUsers(err,users) {
-        console.log(err, users);
-        agenda.now('parse xlsx address and tokens amount');
-      })
+        agenda.every('35 seconds', 'transfer tokens to users');
     });
+
+    // agenda.cancel({
+    //   name: 'parse xlsx address and tokens amount'
+    // }, (err, numRemoved) => {
+    //   console.log(err, numRemoved);
+
+    //   tokenFunction.remove({}, function removedUsers(err,users) {
+    //     console.log(err, users);
+    //     agenda.now('parse xlsx address and tokens amount');
+    //   })
+    // });
     //agenda.now('Update Users Tokens if refer success is greater than 100 and tokens are zero');
     
     //agenda.now('update transaction status and token transfer status');
