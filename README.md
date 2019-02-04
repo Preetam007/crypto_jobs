@@ -2,7 +2,7 @@
 
 ### What is this repository for? ###
 
-APIs for IDAP ICO LAUNCH PLATFORM
+Crypto jobs to update transactions status of etherum , bitcoin , litecoin etc
 
 ### Prerequisites
   - Node.js
@@ -15,12 +15,8 @@ APIs for IDAP ICO LAUNCH PLATFORM
 npm install
 npm start
 
-## API
+## Check status of jobs 
 
-API Docs
+/jobs/agendash
 
-http://localhost:4000/api/v1/api-docs
-
-or if you love JSON
-
-http://localhost:4000/api/v1/api-docs.json
+## comment out specific jobs to run that job in /jobs/eth.js

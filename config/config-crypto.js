@@ -1,8 +1,8 @@
 var config = {
-  hashKey: "Aka@!@#0**",
+  hashKey: "#####",
   testnet: {
     mongoDb: {
-      uri: 'mongodb://localhost/idap'
+      uri: 'mongodb://localhost/jobs'
     },
     provider:"https://ropsten.infura.io/",
     eth_url: "http://ropsten.etherscan.io/",

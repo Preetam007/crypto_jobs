@@ -1,6 +1,6 @@
 {
   "apps": [{
-    "name" : "idap jobs",
+    "name" : "crypto jobs",
     "script": "index.js",
     "instances": "1",
     "exec_mode": "cluster",
@@ -14,7 +14,3 @@
     }
   }]
 }
-
-// pm2 start index.js -i 0 --name "idap backend"
-
-// pm2 start server/index.js -i 0 --name "idap backend"

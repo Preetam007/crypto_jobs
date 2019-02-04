@@ -40,7 +40,7 @@ const app = express();
 
 const agenda = new Agenda({
   db: {
-    address: 'mongodb://localhost/idap',
+    address: 'mongodb://localhost/jobs',
     collection: 'agendaJobs'
   }
 });

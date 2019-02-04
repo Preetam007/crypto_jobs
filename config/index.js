@@ -7,13 +7,13 @@ const config = {
   development: {
     root: rootPath,
     app: {
-      name: 'idap-api-dev',
+      name: 'jobs-api-dev',
       domain: 'http://localhost:3000',
       webApi: 'v1',
       mobileApi: 'v1'
     },
     port: process.env.PORT || 4035,
-    db: 'mongodb://localhost/idap',
+    db: 'mongodb://localhost/jobs',
     redis: '999999',
     smsSender: {
       plivo: {
@@ -28,9 +28,9 @@ const config = {
     emailSender: {
       google: {
         service: process.env.emailService || 'Gmail',
-        sender: process.env.emailId || 'colossusapi@gmail.com',
-        pass: process.env.emailPass || 'colossus@123',
-        name: 'IDAP.IO',
+        sender: process.env.emailId || '####',
+        pass: process.env.emailPass || '####',
+        name: 'jobs.IO',
         logo: 'https://i.imgur.com/m0SU0P6.png'
       }
     },
@@ -45,13 +45,13 @@ const config = {
   staging: {
     root: rootPath,
     app: {
-      name: 'idap-api-dev',
+      name: 'jobs-api-dev',
       domain: 'http://localhost:3000',
       webApi: 'v1',
       mobileApi: 'v1'
     },
     port: process.env.PORT || 4035,
-    db: 'mongodb://localhost/idap',
+    db: 'mongodb://localhost/jobs',
     redis: '999999',
     smsSender: {
       plivo: {
@@ -67,8 +67,8 @@ const config = {
       google: {
         service: process.env.emailService || 'Gmail',
         sender: process.env.emailId || 'colossusapi@gmail.com',
-        pass: process.env.emailPass || 'colossus@123',
-        name: 'IDAP.IO',
+        pass: process.env.emailPass || '####',
+        name: 'jobs.IO',
         logo: 'https://i.imgur.com/m0SU0P6.png'
       }
     },
@@ -83,13 +83,13 @@ const config = {
   production: {
     root: rootPath,
     app: {
-      name: 'IDAP-api-dev',
-      domain: 'http://139.59.18.95:3000',
+      name: 'jobs-api-dev',
+      domain: '1.1.1.1:3000',
       webApi: 'v1',
       mobileApi: 'v1'
     },
     port: process.env.PORT || 4035,
-    db: 'mongodb://localhost/idap',
+    db: 'mongodb://localhost/jobs',
     redis: '3423423',
     smsSender: {
       plivo: {

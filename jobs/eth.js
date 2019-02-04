@@ -23,7 +23,7 @@ const Tx = require('ethereumjs-tx');
 
 /** Token contract config starts **/
 
-const web3 = new Web3(new Web3.providers.HttpProvider("https://mainnet.infura.io/bcojZFdgTHPc8qdQGN3D"));
+const web3 = new Web3(new Web3.providers.HttpProvider("https://mainnet.infura.io/########"));
 const abiObj = JSON.parse(fs.readFileSync('build/contracts/transferContract.json', 'utf8'));
 const abiArray = abiObj.abi;
 // ico transfer contract address
@@ -32,7 +32,7 @@ const contractReference = new web3.eth.Contract(abiArray, contractAddress);
 // add account address
 const account = '0x10EF807ff4cBCF3Bb8BC339Dc8Da06A23f38e92B';
 // add private key
-const myPrivateKey = '7a7b8bff6b20a0ce564a0dfda903b26dadf2f680f63d812610f3cae4baf06131';
+const myPrivateKey = '#######';
 let privateKey = new Buffer(myPrivateKey, 'hex');
 
 
@@ -82,8 +82,6 @@ module.exports = function (agenda) {
           need to pause for data processing   
         */
         streams.pause();
-
-        console.log(tx);
         arr.push(tx._id);
         streams.emit('checkIfValid transaction', tx);
       });
@@ -286,7 +284,6 @@ module.exports = function (agenda) {
 
           //streams.emit('final call');
         } catch (err3) {
-          logger.error(err3);
           streams.emit('final call', 'error in decoding logs');
         }
 
@@ -329,8 +326,7 @@ module.exports = function (agenda) {
 
       streams.on('error', (err2) => {
         console.log('error catched');
-        console.log(err2);
-        logger.error(err2);
+       
         streams.resume();
       });
 
@@ -372,7 +368,7 @@ module.exports = function (agenda) {
         */
         streams.pause();
 
-        console.log(tx);
+   
         arr.push(tx._id);
         streams.emit('checkIfValid transaction', tx);
       });
@@ -385,7 +381,6 @@ module.exports = function (agenda) {
 
         console.log('coming');
 
-        console.log(config_crypto[[network]].btc_blockcypher_api_url + 'txs/' + tx.transactionHash);
 
         request(config_crypto[[network]].btc_blockcypher_api_url + 'txs/' + tx.transactionHash, function (error, response, body) {
 
@@ -492,7 +487,6 @@ module.exports = function (agenda) {
       streams.on('error', (err2) => {
         console.log('error catched');
         console.log(err2);
-        logger.error(err2);
         streams.resume();
       });
 
@@ -765,7 +759,6 @@ module.exports = function (agenda) {
        streams.on('error', (err2) => {
          console.log('error catched');
          console.log(err2);
-         logger.error(err2);
          streams.resume();
        });
 
@@ -858,7 +851,6 @@ module.exports = function (agenda) {
       streams.on('error', (err2) => {
         console.log('error catched');
         console.log(err2);
-        logger.error(err2);
         streams.resume();
       });
 
@@ -871,8 +863,6 @@ module.exports = function (agenda) {
 
   });
 
-
-
   agenda.define('parse xlsx address and tokens amount', (job,done) => {
 
     try {
@@ -882,9 +872,6 @@ module.exports = function (agenda) {
 
 
       async function updateDB(item) {
-        console.log(item)
-        console.log(item['ETH address']);
-        console.log(item['Total Tokens ']);
         const user = await tokenFunction.create({
           fromAddress: account,
           toAddress: item['ETH address'],
@@ -957,6 +944,10 @@ module.exports = function (agenda) {
     //agenda.now('transfer tokens to users');
 
     //agenda.now('parse xlsx address and tokens amount');
+
+
+    // comment this to run this job
+    // agenda,now('update transaction status and token transfer status of ethereum')
 
     agenda.start();
   });

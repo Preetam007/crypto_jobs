@@ -1,7 +1,7 @@
 {
   "name": "crypto_jobs",
   "version": "0.0.1",
-  "description": "Jobs for btc,eth,bch,ltc etc",
+  "description": "Jobs for btc,eth,bch,ltc transactions etc",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

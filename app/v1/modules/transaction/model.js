@@ -4,7 +4,7 @@ const mongoose = require('mongoose'),
 
 const txnRecordSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  tokens: { type: Number , default : 0 }, // Idap token amount
+  tokens: { type: Number , default : 0 },
   status : { type : String , enum: constants.possibleTrxnStatus, default : 'pending' },// 1st fun
   tokensTransferred : { type : String , enum : constants.possibleTokenTransferStatus , default : 'no' },//2nd fun
   initiatedBy: {
