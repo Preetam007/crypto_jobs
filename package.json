@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "prepare": "npm run snyk-protect",
+    "snyk-protect": "snyk-protect"
   },
   "author": "raopreeetam007@gmail.com",
   "license": "ISC",
@@ -21,7 +23,7 @@
     "body-parser": "^1.18.2",
     "dotenv": "^6.0.0",
     "ethereumjs-abi": "0.6.5",
-    "ethereumjs-tx": "1.3.3",
+    "ethereumjs-tx": "2.1.2",
     "ethereumjs-wallet": "^0.6.0",
     "express": "^4.16.3",
     "glob": "^7.1.2",
@@ -33,19 +35,21 @@
     "multer": "^1.3.0",
     "multer-s3": "^2.7.0",
     "node-schedule": "^1.3.0",
-    "nodemailer": "^4.6.4",
+    "nodemailer": "^6.9.9",
     "ratelimiter": "^3.0.3",
     "redis": "^2.8.0",
-    "request": "^2.83.0",
+    "request": "^2.88.2",
     "sha3": "1.2.0",
     "solc": "0.4.20",
-    "web3": "1.0.0-beta.33",
+    "web3": "4.0.1",
     "web3-provider-engine": "^8.6.1",
     "winston": "^2.4.1",
     "winston-daily-rotate-file": "^3.2.1",
-    "xlsx": "0.13.2"
+    "xlsx": "0.13.2",
+    "@snyk/protect": "latest"
   },
   "devDependencies": {
     "eslint": "^4.19.1"
-  }
+  },
+  "snyk": true
 }
