@@ -38,7 +38,7 @@
     "redis": "^2.8.0",
     "request": "^2.83.0",
     "sha3": "1.2.0",
-    "solc": "0.4.20",
+    "solc": "0.8.23",
     "web3": "1.0.0-beta.33",
     "web3-provider-engine": "^8.6.1",
     "winston": "^2.4.1",
