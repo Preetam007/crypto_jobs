@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "prepare": "npm run snyk-protect",
+    "snyk-protect": "snyk-protect"
   },
   "author": "raopreeetam007@gmail.com",
   "license": "ISC",
@@ -14,7 +16,7 @@
     "agendash": "*",
     "app-module-path": "^2.2.0",
     "async": "^2.6.0",
-    "axios": "0.18.0",
+    "axios": "0.21.1",
     "bcrypt-nodejs": "0.0.3",
     "bip39": "^2.4.0",
     "bitcore-lib": "^0.14.0",
@@ -43,9 +45,11 @@
     "web3-provider-engine": "^8.6.1",
     "winston": "^2.4.1",
     "winston-daily-rotate-file": "^3.2.1",
-    "xlsx": "0.13.2"
+    "xlsx": "0.13.2",
+    "@snyk/protect": "latest"
   },
   "devDependencies": {
     "eslint": "^4.19.1"
-  }
+  },
+  "snyk": true
 }
